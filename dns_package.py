@@ -57,8 +57,8 @@ class DNSPack:
             bits = ('11' + get_bits_from_10(self.ptr_for_sectiones_query[0],14))
             answers = answers + bytearray([get_byte_from_bits(bits[:8]),get_byte_from_bits(bits[8:])]) + server.end_answer_section
             i = i + 1
-        return self.data[:self.__ptr_on_first_answer_section] + answers + self.data[self.__ptr_on_first_answer_section:]
-
+        self.data = self.data[:self.__ptr_on_first_answer_section] + answers + self.data[self.__ptr_on_first_answer_section:]
+        return self.data
 
     def get_query_sectiones(self):
         ptr = 12

@@ -33,6 +33,10 @@ class Server:
     def send_udp_pack(self,data,addr):
         print(data)
         print(addr)
+        print('----')
+        for i in data:
+            print(i)
+        print('----')
         self.__socket_udp.sendto(data, addr)
 
     def domain_in_blacklist(self, domen):
