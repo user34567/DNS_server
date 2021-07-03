@@ -26,6 +26,10 @@ class Server:
         self.__upstreamserver_ip_str = config["upstreamserver"]["ip"]
         self.__cretate_end_answer_section(bytes(config["answer"]['text'], 'utf-8'))
 
+
+    def get_upstreamserver_ip(self):
+        return self.__upstreamserver_ip_str
+
     def __cretate_end_answer_section(self,answer_bytes):
         self.end_answer_section =  bytearray([0, 16, 0, 1]) + get_bytes_from_10(TTL,4) + get_bytes_from_10(len(answer_bytes) + 1,2) +\
                bytearray([len(answer_bytes)]) + answer_bytes
