@@ -2,7 +2,7 @@ import socket
 from const import *
 import configparser
 from concurrent.futures import ProcessPoolExecutor
-from binary_functiones import get_bytes_from_10
+from binary_functiones import get_bytes_from_10, get_bits_from_10, get_byte_from_bits
 
 
 class Server:
@@ -10,6 +10,9 @@ class Server:
         self.__init_sockets()
         self.__pool = ProcessPoolExecutor(THREADS_COUNT)
         self.__get_data_from_config()
+
+    def get_pool(self):
+        return self.__pool
 
     def __init_sockets(self):
         sock_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -26,25 +29,24 @@ class Server:
         self.__upstreamserver_ip_str = config["upstreamserver"]["ip"]
         self.__cretate_end_answer_section(bytes(config["answer"]['text'], 'utf-8'))
 
-
     def get_upstreamserver_ip(self):
         return self.__upstreamserver_ip_str
 
     def __cretate_end_answer_section(self,answer_bytes):
-        self.end_answer_section =  bytearray([0, 16, 0, 1]) + get_bytes_from_10(TTL,4) + get_bytes_from_10(len(answer_bytes) + 1,2) +\
-               bytearray([len(answer_bytes)]) + answer_bytes
+        self.end_answer_section = bytearray([0, 16, 0, 1]) + get_bytes_from_10(TTL, 4) + get_bytes_from_10(len(answer_bytes) + 1, 2) + bytearray([len(answer_bytes)]) + answer_bytes
 
-    def send_udp_pack(self,data,addr):
-        print(data)
-        print(addr)
-        print('----')
-        for i in data:
-            print(i)
-        print('----')
-        self.__socket_udp.sendto(data, addr)
+    def send_udp_pack(self, data, addr):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(data, addr)
+        sock.close()
+        
+    def send_tcp_pack(self, data, addr):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.sendto(data, addr)
+        sock.close()
 
-    def domain_in_blacklist(self, domen):
-        return domen in self.__blacklist_set
+    def domain_in_blacklist(self, domain):
+        return domain in self.__blacklist_set
 
     def get_upt_socket(self):
         return self.__socket_udp
@@ -52,8 +54,22 @@ class Server:
     def get_tcp_socket(self):
         return self.__socket_tcp
 
-
-
+    """
+1 — ошибка связана с тем, что сервер не смог понять форму запроса;
+2 — эта ошибка с некорректной работой сервера имен;
+3 — имя, которое разрешает клиент не существует в данном домене;
+4 — сервер не может выполнить запрос данного типа;                     
+5 — этот код означает, что сервер не может удовлетворить запроса клиента в
+ силу административных ограничений безопасности         
+."""
+    def rcode(self, pack, code):
+        new_byte = get_byte_from_bits(get_bits_from_10(pack.data[3], 4) + get_bits_from_10(code, 4))
+        pack.data = pack.data[:3] + bytearray(new_byte) + pack.data[4:]
+        if pack.udp:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.sendto(pack.data, pack.addr)
 
 
 server = Server()
