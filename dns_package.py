@@ -1,8 +1,9 @@
 from binary_functiones import get_bits_from_10, get_byte_from_bits, get_bytes_from_10
 from server import server
 
+
 class DNSPack:
-    def __init__(self, data, addr, udp,clientsocket=None):
+    def __init__(self, data, addr, udp, clientsocket=None):
         self.data = data
         self.addr = addr
         self.udp = udp
@@ -10,10 +11,10 @@ class DNSPack:
         self.clientsocket = clientsocket
 
     def is_query(self):
-        return get_bits_from_10(self.data[2],8)[0] == '0'
+        return get_bits_from_10(self.data[2], 8)[0] == '0'
 
     def get_opcode(self):
-        return get_byte_from_bits(get_bits_from_10(self.data[2],8)[1:5])
+        return get_byte_from_bits(get_bits_from_10(self.data[2], 8)[1:5])
 
     def is_all_information_in_pack(self):
         return get_bits_from_10(self.data[2], 8)[6] == '0'
@@ -21,7 +22,7 @@ class DNSPack:
     def get_count_query_sectiones(self):
         return self.data[4] * 256 + self.data[5]
 
-    def __get_name_in_section(self,ptr):
+    def __get_name_in_section(self, ptr):
         self.ptr_for_sectiones_query.append(ptr)
         text_arr = []
         while self.data[ptr] != 0:
@@ -59,8 +60,8 @@ class DNSPack:
         i = 0
         answers = bytearray()
         while i != count_answers:
-            bits = ('11' + get_bits_from_10(self.ptr_for_sectiones_query[i],14))
-            answers = answers + bytearray([get_byte_from_bits(bits[:8]),get_byte_from_bits(bits[8:])]) + server.end_answer_section
+            bits = ('11' + get_bits_from_10(self.ptr_for_sectiones_query[i], 14))
+            answers = answers + bytearray([get_byte_from_bits(bits[:8]), get_byte_from_bits(bits[8:])]) + server.end_answer_section
             i = i + 1
         self.data = self.data[:self.__ptr_on_first_answer_section] + answers + self.data[self.__ptr_on_first_answer_section:]
         return self.data
@@ -73,9 +74,9 @@ class DNSPack:
             text, ptr = self.__get_name_in_section(ptr)
             sectiones.append({
                 'bytes': self.data[prev_ptr: ptr+4],
-                'domain':text,
-                'type':self.data[ptr] * 256 + self.data[ptr+1],
-                'class':self.data[ptr + 2] * 256 + self.data[ptr + 3]
+                'domain': text,
+                'type': self.data[ptr] * 256 + self.data[ptr+1],
+                'class': self.data[ptr + 2] * 256 + self.data[ptr + 3]
             })
             ptr = ptr + 4
             prev_ptr = ptr
@@ -83,7 +84,9 @@ class DNSPack:
         return sectiones
 
     def get_ptr_on_first_answer_section(self):
-        return self.__ptr_on_first_answer_section
-
+        try:
+            return self.__ptr_on_first_answer_section
+        except:
+            return Noneакс
 
 
