@@ -2,11 +2,12 @@ from binary_functiones import get_bits_from_10, get_byte_from_bits, get_bytes_fr
 from server import server
 
 class DNSPack:
-    def __init__(self, data, addr, udp):
+    def __init__(self, data, addr, udp,clientsocket=None):
         self.data = data
         self.addr = addr
         self.udp = udp
         self.ptr_for_sectiones_query = []
+        self.clientsocket = clientsocket
 
     def is_query(self):
         return get_bits_from_10(self.data[2],8)[0] == '0'
@@ -30,7 +31,7 @@ class DNSPack:
                 ptr = ptr + 1
                 text_arr.append(str(self.data[ptr:ptr+len_data], 'utf-8'))
                 ptr = ptr + len_data
-            if label[0] == '1' and label[1] == '1':
+            elif label[0] == '1' and label[1] == '1':
                 ptr = ptr + 1
                 ptr_read = get_byte_from_bits(label[2:] + get_bits_from_10(self.data[ptr], 8))
                 while self.data[ptr_read] != 0:

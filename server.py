@@ -36,14 +36,12 @@ class Server:
         self.end_answer_section = bytearray([0, 16, 0, 1]) + get_bytes_from_10(TTL, 4) + get_bytes_from_10(len(answer_bytes) + 1, 2) + bytearray([len(answer_bytes)]) + answer_bytes
 
     def send_udp_pack(self, data, addr):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.sendto(data, addr)
-        sock.close()
+        self.__socket_udp.sendto(data, addr)
         
-    def send_tcp_pack(self, data, addr):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.sendto(data, addr)
+    def send_tcp_pack(self, data, sock):
+        sock.send(data)
         sock.close()
+
 
     def domain_in_blacklist(self, domain):
         return domain in self.__blacklist_set
@@ -66,10 +64,10 @@ class Server:
         new_byte = get_byte_from_bits(get_bits_from_10(pack.data[3], 4) + get_bits_from_10(code, 4))
         pack.data = pack.data[:3] + bytearray(new_byte) + pack.data[4:]
         if pack.udp:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.send_udp_pack(pack.data, pack.addr)
         else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.sendto(pack.data, pack.addr)
+            self.send_tcp_pack(pack.data, pack.clientsocket)
+
 
 
 server = Server()

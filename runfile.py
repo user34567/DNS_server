@@ -11,8 +11,8 @@ def execute_request_udp(data,addr):
     query_handler.handle_query(DNSPack(data,addr, True))
 
 
-def execute_request_tcp(data, addr):
-    query_handler.handle_tcp_query(DNSPack(data, addr, False))
+def execute_request_tcp(data, addr,clientsocket):
+    query_handler.handle_query(DNSPack(data, addr, False, clientsocket))
 
 
 def udp_query_listen():
@@ -30,13 +30,10 @@ def tcp_query_listen():
     while True:
         clientsocket, address = sock.accept()
         data, addr = clientsocket.recvfrom(TCP_PACK_SIZE)
-        server.get_pool().submit(execute_request_tcp, data, addr)
-        clientsocket.close()
+        server.get_pool().submit(execute_request_tcp, data, addr,clientsocket)
+        #clientsocket.close()
 
-
-
-
-
+server
 def run():
     print("server run")
     udp_thread = threading.Thread(target=udp_query_listen)
@@ -45,4 +42,5 @@ def run():
     tcp_thread.start()
 
 run()
+
 

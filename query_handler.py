@@ -124,7 +124,7 @@ class QueryHandler:
                         else:
                             server.rcode(pack, 1)
                             return
-                #ptr = ptr + len_rdata  # на сладующей секции или указывает на 1 больше длинны отвeтов
+                # ptr = ptr + len_rdata  # на сладующей секции или указывает на 1 больше длинны отвeтов
             else:
                 label = get_bits_from_10(upstreamserwer_pack.data[ptr], 8)
                 if label[0] == '0' and label[1] == '0':
@@ -151,13 +151,13 @@ class QueryHandler:
         if pack.udp:
             server.send_udp_pack(new_data, pack.addr)
         else:
-            server.send_tcp_pack(new_data, pack.addr)
+            server.send_tcp_pack(new_data, pack.clientsocket)
 
     def __send_default_answer(self, pack):
         if pack.udp:
             server.send_udp_pack(pack.create_default_pack(), pack.addr)
         else:
-            server.send_tcp_pack(pack.create_default_pack(), pack.addr)
+            server.send_tcp_pack(pack.create_default_pack(), pack.clientsocket)
 
     def __redirect_to_upstreamserver(self, pack):
         if pack.udp:
@@ -168,7 +168,7 @@ class QueryHandler:
         if pack.udp:
             server.send_udp_pack(sock.recv(DATA_PACKAGE_SIZE), pack.addr)
         else:
-            server.send_tcp_pack(sock.recv(DATA_PACKAGE_SIZE), pack.addr)
+            server.send_tcp_pack(sock.recv(DATA_PACKAGE_SIZE), pack.clientsocket)
 
 
 query_handler = QueryHandler()
