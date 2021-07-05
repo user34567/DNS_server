@@ -7,11 +7,11 @@ import threading
 from const import DATA_PACKAGE_SIZE, QUEUE_SOCKET_SIZE, TCP_PACK_SIZE
 
 
-def execute_request_udp(data,addr):
-    query_handler.handle_query(DNSPack(data,addr, True))
+def execute_request_udp(data, addr):
+    query_handler.handle_query(DNSPack(data, addr, True))
 
 
-def execute_request_tcp(data, addr,clientsocket):
+def execute_request_tcp(data, addr, clientsocket):
     query_handler.handle_query(DNSPack(data, addr, False, clientsocket))
 
 
@@ -31,9 +31,7 @@ def tcp_query_listen():
         clientsocket, address = sock.accept()
         data, addr = clientsocket.recvfrom(TCP_PACK_SIZE)
         server.get_pool().submit(execute_request_tcp, data, addr,clientsocket)
-        #clientsocket.close()
 
-server
 def run():
     print("server run")
     udp_thread = threading.Thread(target=udp_query_listen)

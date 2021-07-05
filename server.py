@@ -42,7 +42,6 @@ class Server:
         sock.send(data)
         sock.close()
 
-
     def domain_in_blacklist(self, domain):
         return domain in self.__blacklist_set
 
@@ -52,14 +51,6 @@ class Server:
     def get_tcp_socket(self):
         return self.__socket_tcp
 
-    """
-1 — ошибка связана с тем, что сервер не смог понять форму запроса;
-2 — эта ошибка с некорректной работой сервера имен;
-3 — имя, которое разрешает клиент не существует в данном домене;
-4 — сервер не может выполнить запрос данного типа;                     
-5 — этот код означает, что сервер не может удовлетворить запроса клиента в
- силу административных ограничений безопасности         
-."""
     def rcode(self, pack, code):
         new_byte = get_byte_from_bits(get_bits_from_10(pack.data[3], 4) + get_bits_from_10(code, 4))
         pack.data = pack.data[:3] + bytearray(new_byte) + pack.data[4:]
@@ -67,7 +58,5 @@ class Server:
             self.send_udp_pack(pack.data, pack.addr)
         else:
             self.send_tcp_pack(pack.data, pack.clientsocket)
-
-
 
 server = Server()

@@ -1,6 +1,6 @@
 from server import server
 import socket
-from const import DATA_PACKAGE_SIZE, SERVER_PORT
+from const import DATA_PACKAGE_SIZE, SERVER_PORT, TCP_PACK_SIZE
 from dns_package import DNSPack
 from const import TYPES
 from binary_functiones import get_bits_from_10, get_bytes_from_10, get_byte_from_bits
@@ -76,10 +76,15 @@ class QueryHandler:
         new_data = new_data + pack.data[pack.get_ptr_on_first_answer_section():]
         if pack.udp:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.sendto(new_data, (server.get_upstreamserver_ip(), SERVER_PORT))
+            return DNSPack(sock.recv(DATA_PACKAGE_SIZE), None, pack.udp)
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.sendto(new_data, (server.get_upstreamserver_ip(), SERVER_PORT))
-        return DNSPack(sock.recv(DATA_PACKAGE_SIZE), None, pack.udp)
+            sock.connect((server.get_upstreamserver_ip(), SERVER_PORT))
+            sock.send(new_data)
+            data = sock.recv(TCP_PACK_SIZE)
+            sock.close()
+            return DNSPack(data, None, pack.udp)
 
     def __send_comb_answer(self, pack, sectiones_in_blacklist, sectiones_not_in_blacklist):
         upstreamserwer_pack = self.__get_pack_answer_thet_not_in_blacklist(pack, sectiones_not_in_blacklist)
@@ -110,7 +115,7 @@ class QueryHandler:
                 len_rdata = upstreamserwer_pack.data[ptr] * 256 + upstreamserwer_pack.data[ptr+1]
                 ptr = ptr + 2  # на секции RDATA
                 if type_answer in {1}:
-                    ptr = ptr + len_rdata # на сладующей секции или указывает на 1 больше длинны отвтов
+                    ptr = ptr + len_rdata  # на сладующей секции или указывает на 1 больше длинны отвтов
                 else:
                     j = 0
                     while j != len_rdata:
@@ -118,7 +123,7 @@ class QueryHandler:
                         if label[0] == '0' and label[1] == '0':
                             j = j + get_byte_from_bits(label[2:]) + 1
                         elif label[0] == '1' and label[1] == '1':
-                            new_label = get_bytes_from_10( upstreamserwer_pack.data[ptr+j]*256+ upstreamserwer_pack.data[ptr+j+1]+len_add_bytes_to_querys,2)
+                            new_label = get_bytes_from_10(upstreamserwer_pack.data[ptr+j]*256 + upstreamserwer_pack.data[ptr+j+1]+len_add_bytes_to_querys, 2)
                             upstreamserwer_pack.data = upstreamserwer_pack.data[:ptr+j] + new_label + upstreamserwer_pack.data[ptr+j+2:]
                             j = j + 2
                         else:
@@ -132,14 +137,13 @@ class QueryHandler:
                     ptr = ptr + get_byte_from_bits(label[2:]) + 1
                 elif label[0] == '1' and label[1] == '1':
                     standart_label = False
-                    new_label = get_bytes_from_10(upstreamserwer_pack.data[ptr] * 256 + upstreamserwer_pack.data[ ptr + 1] + len_add_bytes_to_querys, 2)
+                    new_label = get_bytes_from_10(upstreamserwer_pack.data[ptr] * 256 + upstreamserwer_pack.data[ptr + 1] + len_add_bytes_to_querys, 2)
                     upstreamserwer_pack.data = upstreamserwer_pack.data[:ptr] + new_label + upstreamserwer_pack.data[ptr + 2:]
                     ptr = ptr + 2
                 else:
                     server.rcode(pack, 1)
                     return
         upstreamserwer_answers = upstreamserwer_pack.data[ptr_copy:ptr]
-        i = 0
         blacklist_answers = bytearray()
         ptr_for_sections_query = 12
         for section in sectiones_in_blacklist:
